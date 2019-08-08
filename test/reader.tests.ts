@@ -114,12 +114,40 @@ describe('BitReader', () => {
             expect(r.peek(8)).to.equal(0x11);
             r.skip(8);
             expect(r.peek(16)).to.equal(0x8AA5);
-        })
+        });
     });
 
     describe('take()', () => {
-        const { buffer } = Uint8Array.of(0xff, 0x00, 0x81, 0x18, 0xAA, 0x55, 0xA5, 0x5A);
+        const { buffer } = Uint8Array.of(0xff, 0x00, 0x81, 0x18, 0xAA, 0x55, 0xA5, 0x5A, 0x00);
+        it('should read bits and move forward', () => {
+            const r = new BitReader(buffer);
+            expect(r.take(4)).to.equal(0xf);
+            expect(r.take(4)).to.equal(0xf);
 
+            expect(r.take(4)).to.equal(0x0);
+            expect(r.take(4)).to.equal(0x0);
+
+            expect(r.take(2)).to.equal(0b10);
+            expect(r.take(2)).to.equal(0b00);
+            expect(r.take(2)).to.equal(0b00);
+            expect(r.take(2)).to.equal(0b01);
+
+            expect(r.take(8)).to.equal(0x18);
+
+            expect(r.take(4)).to.equal(0xA);
+            expect(r.take(2)).to.equal(0b10);
+            expect(r.take(1)).to.equal(0b1);
+            expect(r.take(1)).to.equal(0b0);
+
+            expect(r.take(32)).to.equal(0x55A55A00);
+        });
+
+        it('should handle non-aligned multi-byte reads', () => {
+            const r = new BitReader(buffer);
+            r.skip(2);
+            expect(r.take(24)).to.equal(0b11_1111_0000_0000_1000_0001_00);
+            expect(r.take(6)).to.equal(0b01_1000);
+        });
     });
 
     describe('edge cases', () =>{

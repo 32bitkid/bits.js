@@ -104,7 +104,7 @@ class BitReader implements IBitReader {
 
         while (this.available <= 24) {
             if (this.idx + 1 > this.source.length) {
-                if (this.available > len) { break; }
+                if (this.available >= len) { break; }
                 throw new Error('unexpected end of stream');
             }
 
