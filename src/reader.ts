@@ -2,6 +2,7 @@ interface IBitReader {
     skip(len: number): void
     peek(len: number): number
     take(len: number): number
+    byteAlign(): number
 }
 
 class BitReader implements IBitReader {
@@ -90,6 +91,12 @@ class BitReader implements IBitReader {
         }
 
         throw new Error(`${len} is out of range. (0<=len<=32)`);
+    }
+
+    byteAlign(): number {
+        const bits = this.available % 8
+        this.skip(bits);
+        return bits;
     }
 
     private _take(len: number): number {

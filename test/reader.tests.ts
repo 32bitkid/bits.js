@@ -150,6 +150,25 @@ describe('BitReader', () => {
         });
     });
 
+    describe('byteAlign()', () => {
+        const { buffer } = Uint8Array.of(0x81, 0x18);
+        it('should be a noop if already aligned', () => {
+            const r = new BitReader(buffer);
+            expect(r.peek(4)).to.equal(0x8);
+            expect(r.byteAlign()).to.equal(0);
+            expect(r.peek(4)).to.equal(0x8);
+        });
+
+        it('should return the number of bits skipped', () => {
+            for (let i = 1; i < 8; i++) {
+                const r = new BitReader(buffer);
+                r.skip(i);
+                expect(8 - r.byteAlign()).to.equal(i);
+                expect(r.peek(8)).to.equal(0x18);
+            }
+        });
+    });
+
     describe('edge cases', () =>{
         it('should handle unaligned take >24 bits', () => {
             const { buffer } = Uint8Array.of(0x01, 0x23, 0x45, 0x67, 0x80);
