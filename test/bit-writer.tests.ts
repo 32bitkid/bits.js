@@ -11,15 +11,10 @@ describe('BitWriter', () =>{
                 .write1(true)
                 .write1(true)
                 .write1(true)
-                .write1(true)
-                .write1(true)
-                .write1(true)
-                .write1(true)
+                .write1(true, true, true, true)
 
-                .write1(true)
-                .write1(false)
-                .write1(true)
-                .write1(false)
+                .write1(true, false)
+                .write1(true, false)
                 .off().on().off().on();
 
             expect(writer.length).equal(2);
