@@ -1,6 +1,6 @@
 interface IBitWriter {
     readonly buffer: ArrayBuffer
-    readonly position: number
+    readonly length: number
 
     write(val: number, width: number): IBitWriter
 
@@ -20,27 +20,43 @@ interface IBitWriter {
     align(): number
 }
 
+type ArrayBufferResizer = (buffer?: ArrayBuffer) => ArrayBuffer
+
+interface BitWriterOpts {
+    buffer?: ArrayBuffer
+    start?: number
+    onResize?: ArrayBufferResizer
+}
+
 class BitWriter implements IBitWriter {
-    private readonly bytes: Uint8Array;
-    private readonly length: number;
+    private readonly _resize: ArrayBufferResizer;
 
-    private idx: number;
-    private bit: number;
+    private _buffer: ArrayBuffer;
+    private _bytes: Uint8Array;
+    private _idx: number;
+    private _bit: number;
 
-    get buffer(): ArrayBuffer { return this.bytes.buffer; }
-    get position():number  { return this.idx + (this.bit === 0 ? 0 : 1) }
+    get buffer(): ArrayBuffer { return this._buffer; }
+    get length():number  { return this._idx + (this._bit === 0 ? 0 : 1) }
 
-    constructor(buffer: ArrayBuffer, start = 0, length = buffer.byteLength - start) {
-        this.bytes = new Uint8Array(buffer);
-        this.idx = start;
-        this.length = length;
-        this.bit = 0;
+    constructor(options: BitWriterOpts = {}) {
+        const {
+            onResize = resizeNotSupported,
+            buffer = onResize(),
+            start = 0,
+        } = options;
+
+        this._buffer = buffer;
+        this._bytes = new Uint8Array(buffer);
+        this._idx = start;
+        this._resize = onResize;
+        this._bit = 0;
     }
 
     skip(width: number): IBitWriter {
-        this.bit += width;
-        this.idx += this.bit >>> 3;
-        this.bit &= 0x7;
+        this._bit += width;
+        this._idx += this._bit >>> 3;
+        this._bit &= 0x7;
         return this;
     }
 
@@ -49,18 +65,22 @@ class BitWriter implements IBitWriter {
         let payload = value << (32 - valueWidth);
 
         while (remainder > 0) {
-            if (this.idx >= this.length) {
-                throw new Error('out of buffer space');
+            if (this._idx >= this._bytes.length) {
+                this._buffer = this._resize(this._buffer);
+                this._bytes = new Uint8Array(this._buffer);
+                if (this._idx >= this._bytes.length) {
+                    throw new Error('overflow: out of buffer space');
+                }
             }
 
-            const availableBits = 8 - this.bit;
+            const availableBits = 8 - this._bit;
             const width = Math.min(remainder, availableBits);
             const shift = (availableBits - width);
             const bits = payload >>> (32 - width - shift);
             const mask = ~(-1 >>> (32 - width - shift));
 
-            this.bytes[this.idx] &= mask;
-            this.bytes[this.idx] |= bits;
+            this._bytes[this._idx] &= mask;
+            this._bytes[this._idx] |= bits;
 
             this.skip(width);
             payload <<= width;
@@ -90,13 +110,35 @@ class BitWriter implements IBitWriter {
     write32(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 32), this); }
 
     align(): number {
-        const skipped = this.bit;
+        const skipped = this._bit;
         if (skipped) {
-            this.bit = 0;
-            this.idx += 1;
+            this._bit = 0;
+            this._idx += 1;
         }
         return skipped;
     }
+}
+
+export function createChunkAllocator(chunkSize: number = 0x10000): ArrayBufferResizer {
+    return function onResize(src?: ArrayBuffer): ArrayBuffer {
+        if (src === undefined) { return new ArrayBuffer(chunkSize); }
+        const dst = new ArrayBuffer(src.byteLength + chunkSize);
+        new Uint8Array(dst).set(new Uint8Array(src), 0);
+        return dst;
+    }
+}
+
+export function createResizer(initialSize: number = 0x10000): ArrayBufferResizer {
+    return function onResize(src?: ArrayBuffer): ArrayBuffer {
+        if (src === undefined) { return new ArrayBuffer(initialSize); }
+        const dst = new ArrayBuffer(src.byteLength * 2 || 1);
+        new Uint8Array(dst).set(new Uint8Array(src), 0);
+        return dst;
+    }
+}
+
+function resizeNotSupported(buffer?: ArrayBuffer): ArrayBuffer {
+    throw new Error(buffer === undefined ? 'buffer is required' : 'overflow: out of buffer space');
 }
 
 export default BitWriter;

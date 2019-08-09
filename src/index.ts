@@ -1,4 +1,4 @@
 import BitReader from './bit-reader';
-import BitWriter from './bit-writer';
+import BitWriter, { createResizer, createChunkAllocator } from './bit-writer';
 
-export { BitReader, BitWriter };
+export { BitReader, BitWriter, createResizer, createChunkAllocator };
