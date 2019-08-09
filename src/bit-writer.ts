@@ -1,5 +1,6 @@
 export interface IBitWriter {
     readonly buffer: ArrayBuffer
+    readonly start: number
     readonly length: number
 
     write(val: number, width: number): IBitWriter
@@ -29,6 +30,7 @@ interface BitWriterOpts {
 }
 
 class BitWriter implements IBitWriter {
+    private readonly _start: number;
     private readonly _resize: ArrayBufferResizer;
 
     private _buffer: ArrayBuffer;
@@ -37,6 +39,7 @@ class BitWriter implements IBitWriter {
     private _bit: number;
 
     get buffer(): ArrayBuffer { return this._buffer; }
+    get start():number { return this._start; }
     get length():number  { return this._idx + (this._bit === 0 ? 0 : 1) }
 
     constructor(options: BitWriterOpts = {}) {
@@ -48,7 +51,7 @@ class BitWriter implements IBitWriter {
 
         this._buffer = buffer;
         this._bytes = new Uint8Array(buffer);
-        this._idx = start;
+        this._start = this._idx = start;
         this._resize = onResize;
         this._bit = 0;
     }
