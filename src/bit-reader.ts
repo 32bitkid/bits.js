@@ -1,4 +1,4 @@
-interface IBitReader {
+export interface IBitReader {
     skip(len: number): void
     peek(len: number): number
     take(len: number): number

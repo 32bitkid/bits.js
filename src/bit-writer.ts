@@ -1,4 +1,4 @@
-interface IBitWriter {
+export interface IBitWriter {
     readonly buffer: ArrayBuffer
     readonly length: number
 
