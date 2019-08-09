@@ -11,9 +11,24 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "mocha -r ts-node/register test/**/*.tests.ts",
-    "test:watch": "mocha -r ts-node/register -watch --watch-extensions ts test/**/*.tests.ts",
-    "lint": "eslint src/**/*.ts"
+    "test": "mocha test/",
+    "test:watch": "mocha --watch test/",
+    "lint": "eslint src/**/*.ts",
+    "coverage": "nyc mocha test/",
+    "clean": "rimraf dist"
+  },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "**/*.d.ts"
+    ],
+    "all": true
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
@@ -23,6 +38,8 @@
     "chai": "^4.2.0",
     "eslint": "^6.1.0",
     "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.3",
     "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
   }

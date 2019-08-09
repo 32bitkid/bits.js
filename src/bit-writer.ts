@@ -1,24 +1,25 @@
 import { ArrayBufferResizer, resizeNotSupported } from "./resizers";
 
-export interface IBitWriter {
+export interface BitWriter {
     readonly byteLength: number;
 
-    write(val: number, width: number): IBitWriter;
+    write(val: number, width: number): BitWriter;
 
-    on(): IBitWriter;
-    off(): IBitWriter;
-    write1(...values: (boolean|0|1)[]): IBitWriter;
-    write2(...values: (0|1|2|3)[]): IBitWriter;
-    write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter;
-    write4(...values: number[]): IBitWriter;
-    write6(...values: number[]): IBitWriter;
-    write8(...values: number[]): IBitWriter;
-    write16(...values: number[]): IBitWriter;
-    write24(...values: number[]): IBitWriter;
-    write32(...values: number[]): IBitWriter;
+    on(): BitWriter;
+    off(): BitWriter;
+    write1(...values: (boolean|0|1)[]): BitWriter;
+    write2(...values: (0|1|2|3)[]): BitWriter;
+    write3(...values: (0|1|2|3|4|5|6|7)[]): BitWriter;
+    write4(...values: number[]): BitWriter;
+    write6(...values: number[]): BitWriter;
+    write8(...values: number[]): BitWriter;
+    write16(...values: number[]): BitWriter;
+    write24(...values: number[]): BitWriter;
+    write32(...values: number[]): BitWriter;
 
-    skip(width: number): IBitWriter;
-    align(): number;
+    skip(width: number): BitWriter;
+    byteAlign(): number;
+    isAligned(): boolean;
 
     copyTo(dst: ArrayBuffer, start: number): void;
 }
@@ -28,7 +29,7 @@ interface ArrayBufferBitReaderOptions {
     onResize?: ArrayBufferResizer;
 }
 
-class BitWriter implements IBitWriter {
+class ArrayBufferBitWriter implements BitWriter {
     private readonly _resize: ArrayBufferResizer;
 
     private _buffer: ArrayBuffer;
@@ -52,14 +53,14 @@ class BitWriter implements IBitWriter {
         this._bit = 0;
     }
 
-    public skip(width: number): IBitWriter {
+    public skip(width: number): this {
         this._bit += width;
         this._idx += this._bit >>> 3;
         this._bit &= 0x7;
         return this;
     }
 
-    public write(value: number, valueWidth: number): IBitWriter {
+    public write(value: number, valueWidth: number): this {
         let remainder = valueWidth;
         let payload = value << (32 - valueWidth);
 
@@ -89,53 +90,57 @@ class BitWriter implements IBitWriter {
         return this;
     }
 
-    public on(): IBitWriter { return this.write(1, 1); }
-    public off(): IBitWriter { return this.write(0, 1); }
+    public on(): this { return this.write(1, 1); }
+    public off(): this { return this.write(0, 1); }
 
-    public write1(...values: (boolean|0|1)[]): IBitWriter {
+    public write1(...values: (boolean|0|1)[]): this {
         values.forEach((val): void => { this.write(val ? 1 : 0, 1) });
         return this;
     }
-    public write2(...values: (0|1|2|3)[]): IBitWriter {
+    public write2(...values: (0|1|2|3)[]): this {
         values.forEach((val): void => { this.write(val, 2) });
         return this;
     }
-    public write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter {
+    public write3(...values: (0|1|2|3|4|5|6|7)[]): this {
         values.forEach((val): void => { this.write(val, 3) });
         return this;
     }
-    public write4(...values: number[]): IBitWriter {
+    public write4(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 4) });
         return this;
     }
-    public write6(...values: number[]): IBitWriter {
+    public write6(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 6) });
         return this;
     }
-    public write8(...values: number[]): IBitWriter {
+    public write8(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 8) });
         return this;
     }
-    public write16(...values: number[]): IBitWriter {
+    public write16(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 16) });
         return this;
     }
-    public write24(...values: number[]): IBitWriter {
+    public write24(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 24) });
         return this;
     }
-    public write32(...values: number[]): IBitWriter {
+    public write32(...values: number[]): this {
         values.forEach((val): void => { this.write(val, 32) });
         return this;
     }
 
-    public align(): number {
+    public byteAlign(): number {
         const skipped = this._bit;
         if (skipped) {
             this._bit = 0;
             this._idx += 1;
         }
         return skipped;
+    }
+
+    public isAligned(): boolean {
+        return this._bit === 0;
     }
 
     public copyTo(dst: ArrayBuffer, start: number): void {
@@ -149,4 +154,4 @@ class BitWriter implements IBitWriter {
     }
 }
 
-export default BitWriter;
+export default ArrayBufferBitWriter;

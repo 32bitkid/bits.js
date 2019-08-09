@@ -62,7 +62,8 @@
   },
   "files" : [
     "./src/index.ts",
-    "./src/reader.ts",
-    "./src/writer.ts"
+    "./src/bit-reader.ts",
+    "./src/bit-writer.ts",
+    "./src/resizers.ts"
   ]
 }

@@ -1,11 +1,12 @@
-export interface IBitReader {
+export interface BitReader {
     skip(len: number): void;
     peek(len: number): number;
     take(len: number): number;
     byteAlign(): number;
+    isAligned(): boolean;
 }
 
-class BitReader implements IBitReader {
+class BitReader32 implements BitReader {
     private readonly source: Uint8Array;
     private buffer: number = 0;
     private available: number = 0;
@@ -94,6 +95,10 @@ class BitReader implements IBitReader {
         throw new Error(`${len} is out of range. (0<=len<=32)`);
     }
 
+    public isAligned(): boolean {
+        return this.available % 8 === 0;
+    }
+
     public byteAlign(): number {
         const bits = this.available % 8;
         this.skip(bits);
@@ -126,4 +131,4 @@ class BitReader implements IBitReader {
     }
 }
 
-export default BitReader
+export default BitReader32
