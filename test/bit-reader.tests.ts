@@ -44,7 +44,7 @@ describe('BitReader', () => {
         it('should handle all 0s', () => {
             const { buffer } = Uint8Array.of(0x00, 0x00, 0x00, 0x00);
             const r =  new BitReader(buffer);
-            expect(r.peek(0)).to.equal(0b0);
+            expect(r.peek(1)).to.equal(0b0);
             expect(r.peek(2)).to.equal(0b00);
             expect(r.peek(3)).to.equal(0b000);
             expect(r.peek(4)).to.equal(0b0000);
@@ -99,7 +99,7 @@ describe('BitReader', () => {
     });
 
     describe('skip()', () => {
-        const { buffer } = Uint8Array.of(0xff, 0x00, 0x81, 0x18, 0xAA, 0x55, 0xA5, 0x5A);
+        const { buffer } = Uint8Array.of(0xff, 0x00, 0x81, 0x18, 0xAA, 0x55, 0xA5, 0x5A, 0x01);
 
         it('should skip bits in the stream', () => {
             const r = new BitReader(buffer);
@@ -114,6 +114,13 @@ describe('BitReader', () => {
             expect(r.peek(8)).to.equal(0x11);
             r.skip(8);
             expect(r.peek(16)).to.equal(0x8AA5);
+        });
+
+        it('should the correct bits, even when the stream is preloaded', () => {
+            const r = new BitReader(buffer);
+            r.peek(1);
+            r.skip(64);
+            expect(r.peek(8)).to.equal(0x01);
         });
     });
 
@@ -148,6 +155,11 @@ describe('BitReader', () => {
             expect(r.take(24)).to.equal(0b11_1111_0000_0000_1000_0001_00);
             expect(r.take(6)).to.equal(0b01_1000);
         });
+
+        it('take the whole thing', () => {
+            const r = new BitReader(buffer);
+            expect(r.take(32)).to.equal(0xff008118);
+        })
     });
 
     describe('byteAlign()', () => {
@@ -175,10 +187,51 @@ describe('BitReader', () => {
             const r =  new BitReader(buffer);
             r.skip(4);
             expect(r.take(32)).to.equal(0x12345678);
-        })
+        });
+
+        it('should peek to the next byte when unaligned', () => {
+            const { buffer } = Uint8Array.of(0x01, 0x23, 0x45, 0x67, 0x80);
+            const r =  new BitReader(buffer);
+            r.skip(4);
+            expect(r.peek(28)).to.equal(0x1234567);
+        });
+
+        it('should throw if peek goes beyond last byte boundry', () => {
+            const { buffer } = Uint8Array.of(0x01, 0x23, 0x45, 0x67, 0x80);
+            const r =  new BitReader(buffer);
+            r.skip(7);
+            expect(() => { r.peek(26) }).to.throw(/unaligned peek/);
+            expect(() => { r.peek(32) }).to.throw(/unaligned peek/);
+        });
+
+        it('should peek, even if it needs to fill the buffer first', () => {
+            const { buffer } = Uint8Array.of(0x01, 0x23, 0x45, 0x67, 0x80, 0x01, 0x23, 0x45, 0x67, 0x80);
+            const r =  new BitReader(buffer);
+            r.take(28);
+            expect(r.peek(28)).to.equal(0x7800123);
+        });
+    });
+
+    describe('isAligned', () => {
+       it('should work', () => {
+           const { buffer } = Uint8Array.of(0x76, 0x54, 0x32, 0x10);
+           const r =  new BitReader(buffer);
+           for (let i = 0; i < 32; i++) {
+               expect(r.isAligned()).to.equal(i%8===0);
+               r.skip(1);
+           }
+       })
     });
 
     describe('errors', () => {
+        it('should throw with zero peek/take/skip',  () =>{
+            const { buffer } = Uint8Array.of(0x76, 0x54, 0x32, 0x10);
+            const r =  new BitReader(buffer);
+            expect(() => { r.peek(0) }).to.throw(/out of range/);
+            expect(() => { r.take(0) }).to.throw(/out of range/);
+            expect(() => { r.skip(0) }).to.throw(/out of range/);
+        });
+
         it('should throw with negative peek/take/skip',  () =>{
             const { buffer } = Uint8Array.of(0x76, 0x54, 0x32, 0x10);
             const r =  new BitReader(buffer);

@@ -18,7 +18,7 @@ class BitReader32 implements BitReader {
     }
 
     public skip(len: number): void {
-        if (len < 0) { throw new Error('out of range. 0<=len<=∞ '); }
+        if (len <= 0) { throw new Error('out of range. 0<=len<=∞ '); }
 
         let rest = len;
 
@@ -43,15 +43,13 @@ class BitReader32 implements BitReader {
         // Trash remaining bits
         if (rest > 0) {
             this._fill(rest);
-            this.buffer = rest === 32 ? 0 : (this.buffer << rest) >>> 0;
+            this.buffer = (this.buffer << rest) >>> 0;
             this.available -= rest;
         }
     }
 
     public peek(len: number): number {
         switch (true) {
-            case len === 0:
-                return 0;
             case len > 0 && len <= 24:
             case len > 0 && len <= 32 && this.available === 0:
             case len > 0 && len <= 32 && this.available === 32: {
@@ -61,7 +59,10 @@ class BitReader32 implements BitReader {
                 const shift = (32 - len);
                 return (this.buffer >>> shift & (~0 >>> shift)) >>> 0;
             }
-            case len > 0 && len <= 32 && len <= this.available: {
+            case len > 0 && len <= 32 && len <= (this.available | 0b11000): {
+                if (this.available < len) {
+                    this._fill((32 - len) & 0b11000);
+                }
                 const shift = (32 - len);
                 return (this.buffer >>> shift & (~0 >>> shift)) >>> 0;
             }
@@ -69,13 +70,11 @@ class BitReader32 implements BitReader {
                 throw new Error(`unaligned peek: only ${this.available} bits available of the requested ${len}`)
         }
 
-        throw new Error(`${len} is out of range: (0<=len<=32)`)
+        throw new Error(`${len} is out of range: (0<len<=32)`)
     }
 
     public take(len: number): number {
         switch (true) {
-            case len === 0:
-                return 0;
             case len > 0 && len <= 24:
             case len > 0 && len <= 32 && this.available === 0:
             case len > 0 && len <= 32 && this.available === 32:
@@ -92,7 +91,7 @@ class BitReader32 implements BitReader {
             }
         }
 
-        throw new Error(`${len} is out of range. (0<=len<=32)`);
+        throw new Error(`${len} is out of range. (0<len<=32)`);
     }
 
     public isAligned(): boolean {
@@ -101,7 +100,7 @@ class BitReader32 implements BitReader {
 
     public byteAlign(): number {
         const bits = this.available % 8;
-        this.skip(bits);
+        if (bits > 0) { this.skip(bits); }
         return bits;
     }
 
@@ -113,7 +112,7 @@ class BitReader32 implements BitReader {
     }
 
     private _fill(len: number): void {
-        if (len > 32) { throw new Error('cannot fill more than 32 bits at a time'); }
+        if (this.available + len > 32) { throw new Error('invalid fill: cannot fill more than 32 bits at a time'); }
 
         while (this.available <= 24) {
             if (this.idx + 1 > this.source.length) {
