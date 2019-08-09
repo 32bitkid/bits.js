@@ -1,8 +1,8 @@
 export interface IBitReader {
-    skip(len: number): void
-    peek(len: number): number
-    take(len: number): number
-    byteAlign(): number
+    skip(len: number): void;
+    peek(len: number): number;
+    take(len: number): number;
+    byteAlign(): number;
 }
 
 class BitReader implements IBitReader {
@@ -12,11 +12,11 @@ class BitReader implements IBitReader {
 
     private idx = 0;
 
-    constructor(source: ArrayBuffer) {
+    public constructor(source: ArrayBuffer) {
         this.source = new Uint8Array(source);
     }
 
-    skip(len: number): void {
+    public skip(len: number): void {
         if (len < 0) { throw new Error('out of range. 0<=len<=∞ '); }
 
         let rest = len;
@@ -47,7 +47,7 @@ class BitReader implements IBitReader {
         }
     }
 
-    peek(len: number): number {
+    public peek(len: number): number {
         switch (true) {
             case len === 0:
                 return 0;
@@ -71,7 +71,7 @@ class BitReader implements IBitReader {
         throw new Error(`${len} is out of range: (0<=len<=32)`)
     }
 
-    take(len: number): number {
+    public take(len: number): number {
         switch (true) {
             case len === 0:
                 return 0;
@@ -79,7 +79,7 @@ class BitReader implements IBitReader {
             case len > 0 && len <= 32 && this.available === 0:
             case len > 0 && len <= 32 && this.available === 32:
                 return this._take(len);
-            case len > 0 && len <= 32:
+            case len > 0 && len <= 32: {
                 const hiLen = this.available;
                 const lowLen = len - hiLen;
 
@@ -88,13 +88,14 @@ class BitReader implements IBitReader {
 
                 const loBits = this._take(lowLen);
                 return (hiBits | loBits) >>> 0;
+            }
         }
 
         throw new Error(`${len} is out of range. (0<=len<=32)`);
     }
 
-    byteAlign(): number {
-        const bits = this.available % 8
+    public byteAlign(): number {
+        const bits = this.available % 8;
         this.skip(bits);
         return bits;
     }
@@ -122,16 +123,6 @@ class BitReader implements IBitReader {
         }
 
         this.buffer = this.buffer >>> 0;
-    }
-
-    debug(method: string): void {
-        const buffer = this.buffer.toString(2);
-        console.debug("%s: %s %d (%d)",
-            method,
-            '00000000000000000000000000000000'.substr( 0,32-buffer.length) + buffer,
-            this.available,
-            this.idx,
-        );
     }
 }
 

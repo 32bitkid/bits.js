@@ -1,36 +1,34 @@
+import { ArrayBufferResizer, resizeNotSupported } from "./resizers";
+
 export interface IBitWriter {
-    readonly buffer: ArrayBuffer
-    readonly start: number
-    readonly length: number
+    readonly byteLength: number;
 
-    write(val: number, width: number): IBitWriter
+    write(val: number, width: number): IBitWriter;
 
-    on(): IBitWriter
-    off(): IBitWriter
-    write1(...values: (boolean|0|1)[]): IBitWriter
-    write2(...values: (0|1|2|3)[]): IBitWriter
-    write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter
-    write4(...values: number[]): IBitWriter
-    write6(...values: number[]): IBitWriter
-    write8(...values: number[]): IBitWriter
-    write16(...values: number[]): IBitWriter
-    write24(...values: number[]): IBitWriter
-    write32(...values: number[]): IBitWriter
+    on(): IBitWriter;
+    off(): IBitWriter;
+    write1(...values: (boolean|0|1)[]): IBitWriter;
+    write2(...values: (0|1|2|3)[]): IBitWriter;
+    write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter;
+    write4(...values: number[]): IBitWriter;
+    write6(...values: number[]): IBitWriter;
+    write8(...values: number[]): IBitWriter;
+    write16(...values: number[]): IBitWriter;
+    write24(...values: number[]): IBitWriter;
+    write32(...values: number[]): IBitWriter;
 
-    skip(width: number): IBitWriter
-    align(): number
+    skip(width: number): IBitWriter;
+    align(): number;
+
+    copyTo(dst: ArrayBuffer, start: number): void;
 }
 
-type ArrayBufferResizer = (buffer?: ArrayBuffer) => ArrayBuffer
-
-interface BitWriterOpts {
-    buffer?: ArrayBuffer
-    start?: number
-    onResize?: ArrayBufferResizer
+interface ArrayBufferBitReaderOptions {
+    buffer?: ArrayBuffer;
+    onResize?: ArrayBufferResizer;
 }
 
 class BitWriter implements IBitWriter {
-    private readonly _start: number;
     private readonly _resize: ArrayBufferResizer;
 
     private _buffer: ArrayBuffer;
@@ -38,32 +36,30 @@ class BitWriter implements IBitWriter {
     private _idx: number;
     private _bit: number;
 
-    get buffer(): ArrayBuffer { return this._buffer; }
-    get start():number { return this._start; }
-    get length():number  { return this._idx + (this._bit === 0 ? 0 : 1) }
+    public get buffer(): ArrayBuffer { return this._buffer; }
+    public get byteLength(): number  { return this._idx + (this._bit === 0 ? 0 : 1) }
 
-    constructor(options: BitWriterOpts = {}) {
+    public constructor(options: ArrayBufferBitReaderOptions = {}) {
         const {
             onResize = resizeNotSupported,
             buffer = onResize(),
-            start = 0,
         } = options;
 
         this._buffer = buffer;
         this._bytes = new Uint8Array(buffer);
-        this._start = this._idx = start;
         this._resize = onResize;
+        this._idx = 0;
         this._bit = 0;
     }
 
-    skip(width: number): IBitWriter {
+    public skip(width: number): IBitWriter {
         this._bit += width;
         this._idx += this._bit >>> 3;
         this._bit &= 0x7;
         return this;
     }
 
-    write(value: number, valueWidth: number): IBitWriter {
+    public write(value: number, valueWidth: number): IBitWriter {
         let remainder = valueWidth;
         let payload = value << (32 - valueWidth);
 
@@ -93,26 +89,47 @@ class BitWriter implements IBitWriter {
         return this;
     }
 
-    on(): IBitWriter { return this.write(1, 1); }
-    off(): IBitWriter { return this.write(0, 1); }
+    public on(): IBitWriter { return this.write(1, 1); }
+    public off(): IBitWriter { return this.write(0, 1); }
 
-    write1(...values: (boolean|0|1)[]): IBitWriter {
-        return values.reduce((w: IBitWriter, val) => w.write(val ? 1 : 0, 1), this);
+    public write1(...values: (boolean|0|1)[]): IBitWriter {
+        values.forEach((val): void => { this.write(val ? 1 : 0, 1) });
+        return this;
     }
-    write2(...values: (0|1|2|3)[]): IBitWriter {
-        return values.reduce<IBitWriter>((w, val) => w.write(val, 2), this);
+    public write2(...values: (0|1|2|3)[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 2) });
+        return this;
     }
-    write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter {
-        return values.reduce<IBitWriter>((w, val) => w.write(val, 3), this);
+    public write3(...values: (0|1|2|3|4|5|6|7)[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 3) });
+        return this;
     }
-    write4(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 4), this); }
-    write6(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 6), this); }
-    write8(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 8), this); }
-    write16(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 16), this); }
-    write24(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 24), this); }
-    write32(...values: number[]): IBitWriter { return values.reduce<IBitWriter>((w, val) => w.write(val, 32), this); }
+    public write4(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 4) });
+        return this;
+    }
+    public write6(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 6) });
+        return this;
+    }
+    public write8(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 8) });
+        return this;
+    }
+    public write16(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 16) });
+        return this;
+    }
+    public write24(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 24) });
+        return this;
+    }
+    public write32(...values: number[]): IBitWriter {
+        values.forEach((val): void => { this.write(val, 32) });
+        return this;
+    }
 
-    align(): number {
+    public align(): number {
         const skipped = this._bit;
         if (skipped) {
             this._bit = 0;
@@ -120,28 +137,16 @@ class BitWriter implements IBitWriter {
         }
         return skipped;
     }
-}
 
-export function createChunkAllocator(chunkSize: number = 0x10000): ArrayBufferResizer {
-    return function onResize(src?: ArrayBuffer): ArrayBuffer {
-        if (src === undefined) { return new ArrayBuffer(chunkSize); }
-        const dst = new ArrayBuffer(src.byteLength + chunkSize);
-        new Uint8Array(dst).set(new Uint8Array(src), 0);
-        return dst;
+    public copyTo(dst: ArrayBuffer, start: number): void {
+        if (dst.byteLength + start < this.byteLength)  {
+            throw new Error('not enough space: destination ArrayBuffer cannot hold the entire array');
+        }
+
+        const srcBytes = new Uint8Array(this.buffer, start);
+        const dstBytes = new Uint8Array(dst);
+        dstBytes.set(srcBytes);
     }
-}
-
-export function createResizer(initialSize: number = 0x10000): ArrayBufferResizer {
-    return function onResize(src?: ArrayBuffer): ArrayBuffer {
-        if (src === undefined) { return new ArrayBuffer(initialSize); }
-        const dst = new ArrayBuffer(src.byteLength * 2 || 1);
-        new Uint8Array(dst).set(new Uint8Array(src), 0);
-        return dst;
-    }
-}
-
-function resizeNotSupported(buffer?: ArrayBuffer): ArrayBuffer {
-    throw new Error(buffer === undefined ? 'buffer is required' : 'overflow: out of buffer space');
 }
 
 export default BitWriter;
