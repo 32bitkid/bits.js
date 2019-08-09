@@ -1,4 +1,4 @@
-import { ArrayBufferResizer, resizeNotSupported } from "./resizers";
+import {ArrayBufferResizer, createResizer, resizeNotSupported} from "./resizers";
 
 export interface BitWriter {
     readonly byteLength: number;
@@ -42,7 +42,7 @@ class ArrayBufferBitWriter implements BitWriter {
 
     public constructor(options: ArrayBufferBitReaderOptions = {}) {
         const {
-            onResize = resizeNotSupported,
+            onResize = options.buffer ? resizeNotSupported : createResizer(),
             buffer = onResize(),
         } = options;
 
@@ -60,17 +60,14 @@ class ArrayBufferBitWriter implements BitWriter {
         return this;
     }
 
-    public write(value: number, valueWidth: number): this {
-        let remainder = valueWidth;
-        let payload = value << (32 - valueWidth);
+    public write(value: number, width: number): this {
+        let remainder = width;
+        let payload = value << (32 - width);
 
         while (remainder > 0) {
             if (this._idx >= this._bytes.length) {
                 this._buffer = this._resize(this._buffer);
                 this._bytes = new Uint8Array(this._buffer);
-                if (this._idx >= this._bytes.length) {
-                    throw new Error('overflow: out of buffer space');
-                }
             }
 
             const availableBits = 8 - this._bit;
@@ -132,7 +129,7 @@ class ArrayBufferBitWriter implements BitWriter {
 
     public byteAlign(): number {
         const skipped = this._bit;
-        if (skipped) {
+        if (skipped > 0) {
             this._bit = 0;
             this._idx += 1;
         }
@@ -143,13 +140,13 @@ class ArrayBufferBitWriter implements BitWriter {
         return this._bit === 0;
     }
 
-    public copyTo(dst: ArrayBuffer, start: number): void {
-        if (dst.byteLength + start < this.byteLength)  {
+    public copyTo(dst: ArrayBuffer, offset: number = 0): void {
+        if (dst.byteLength + offset < this.byteLength)  {
             throw new Error('not enough space: destination ArrayBuffer cannot hold the entire array');
         }
 
-        const srcBytes = new Uint8Array(this.buffer, start);
-        const dstBytes = new Uint8Array(dst);
+        const srcBytes = new Uint8Array(this._buffer, 0, this.byteLength);
+        const dstBytes = new Uint8Array(dst, offset, this.byteLength);
         dstBytes.set(srcBytes);
     }
 }
