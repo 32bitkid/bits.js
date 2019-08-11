@@ -1,10 +1,10 @@
 {
   "name": "@32bitkid/bits",
   "version": "0.0.0",
-  "description": "A simple bitreader and bitwriter",
+  "description": "A simple bit-reader and bit-writer",
   "author": "J Holmes <j@holmes.codes>",
   "main": "dist/index.js",
-  "types": "./lib/index.d.ts",
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"

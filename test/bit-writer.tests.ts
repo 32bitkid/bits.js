@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import BitWriter from '../src/bit-writer';
+import BitWriter from '../src/bit-writer-array-buffer';
 import {createChunkAllocator, createResizer} from '../src/resizers';
 
 describe('BitWriter', () =>{

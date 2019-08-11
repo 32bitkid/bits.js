@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import BitReader from '../src/bit-reader';
+import BitReader from '../src/bit-reader-32';
 
 describe('BitReader', () => {
     describe('peek()', () => {
