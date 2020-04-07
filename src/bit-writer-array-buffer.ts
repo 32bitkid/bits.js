@@ -1,5 +1,5 @@
 import BitWriter from './bit-writer';
-import {ArrayBufferResizer, createResizer, resizeNotSupported} from "./resizers";
+import { ArrayBufferResizer, createResizer, resizeNotSupported } from './resizers';
 
 interface ArrayBufferBitReaderOptions {
     buffer?: ArrayBuffer;
@@ -14,8 +14,12 @@ class BitWriterArrayBuffer implements BitWriter {
     private _idx: number;
     private _bit: number;
 
-    public get buffer(): ArrayBuffer { return this._buffer; }
-    public get byteLength(): number  { return this._idx + (this._bit === 0 ? 0 : 1) }
+    public get buffer(): ArrayBuffer {
+        return this._buffer;
+    }
+    public get byteLength(): number {
+        return this._idx + (this._bit === 0 ? 0 : 1);
+    }
 
     public constructor(options: ArrayBufferBitReaderOptions = {}) {
         const {
@@ -49,7 +53,7 @@ class BitWriterArrayBuffer implements BitWriter {
 
             const availableBits = 8 - this._bit;
             const width = Math.min(remainder, availableBits);
-            const shift = (availableBits - width);
+            const shift = availableBits - width;
             const bits = payload >>> (32 - width - shift);
             const mask = ~(-1 >>> (32 - width - shift));
 
@@ -64,43 +68,47 @@ class BitWriterArrayBuffer implements BitWriter {
         return this;
     }
 
-    public on(): this { return this.write(1, 1); }
-    public off(): this { return this.write(0, 1); }
+    public on(): this {
+        return this.write(1, 1);
+    }
+    public off(): this {
+        return this.write(0, 1);
+    }
 
-    public write1(...values: (boolean|0|1)[]): this {
-        values.forEach((val): void => { this.write(val ? 1 : 0, 1) });
+    public write1(...values: (boolean | 0 | 1)[]): this {
+        values.forEach((val) => this.write(val ? 1 : 0, 1));
         return this;
     }
-    public write2(...values: (0|1|2|3)[]): this {
-        values.forEach((val): void => { this.write(val, 2) });
+    public write2(...values: (0 | 1 | 2 | 3)[]): this {
+        values.forEach((val) => this.write(val, 2));
         return this;
     }
-    public write3(...values: (0|1|2|3|4|5|6|7)[]): this {
-        values.forEach((val): void => { this.write(val, 3) });
+    public write3(...values: (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7)[]): this {
+        values.forEach((val) => this.write(val, 3));
         return this;
     }
     public write4(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 4) });
+        values.forEach((val) => this.write(val, 4));
         return this;
     }
     public write6(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 6) });
+        values.forEach((val) => this.write(val, 6));
         return this;
     }
     public write8(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 8) });
+        values.forEach((val) => this.write(val, 8));
         return this;
     }
     public write16(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 16) });
+        values.forEach((val) => this.write(val, 16));
         return this;
     }
     public write24(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 24) });
+        values.forEach((val) => this.write(val, 24));
         return this;
     }
     public write32(...values: number[]): this {
-        values.forEach((val): void => { this.write(val, 32) });
+        values.forEach((val) => this.write(val, 32));
         return this;
     }
 
@@ -117,9 +125,11 @@ class BitWriterArrayBuffer implements BitWriter {
         return this._bit === 0;
     }
 
-    public copyTo(dst: ArrayBuffer, offset: number = 0): void {
-        if (dst.byteLength + offset < this.byteLength)  {
-            throw new Error('not enough space: destination ArrayBuffer cannot hold the entire array');
+    public copyTo(dst: ArrayBuffer, offset = 0): void {
+        if (dst.byteLength + offset < this.byteLength) {
+            throw new Error(
+                'not enough space: destination ArrayBuffer cannot hold the entire array',
+            );
         }
 
         const srcBytes = new Uint8Array(this._buffer, 0, this.byteLength);

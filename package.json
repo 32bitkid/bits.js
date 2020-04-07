@@ -15,6 +15,7 @@
     "test:watch": "mocha --watch test/",
     "lint": "eslint src/**/*.ts",
     "coverage": "nyc mocha test/",
+    "format": "prettier --write src/",
     "clean": "rimraf dist"
   },
   "nyc": {
@@ -36,15 +37,31 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/mocha": "^5.2.7",
-    "@typescript-eslint/eslint-plugin": "^1.13.0",
-    "@typescript-eslint/parser": "^1.13.0",
+    "@types/mocha": "^7.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
     "chai": "^4.2.0",
     "eslint": "^6.1.0",
-    "mocha": "^6.2.0",
-    "nyc": "^14.1.1",
-    "rimraf": "^2.6.3",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.1",
+    "prettier": "^2.0.4",
+    "rimraf": "^3.0.2",
     "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "tabWidth": 4,
+    "trailingComma": "all"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended"
+    ]
   }
 }

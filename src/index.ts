@@ -8,19 +8,12 @@ export {
     // Interfaces
     IBitReader,
     IBitWriter,
-
     // Implementations
     BitReader32,
     BitWriterArrayBuffer,
-
     // Allocators
     createResizer,
-    createChunkAllocator
+    createChunkAllocator,
 };
 
-export {
-    BitReader32 as BitReader,
-    BitWriterArrayBuffer as BitWriter,
-}
-
-
+export { BitReader32 as BitReader, BitWriterArrayBuffer as BitWriter };

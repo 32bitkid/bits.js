@@ -2,8 +2,8 @@ import BitReader from './bit-reader';
 
 class BitReader32 implements BitReader {
     private readonly source: Uint8Array;
-    private buffer: number = 0;
-    private available: number = 0;
+    private buffer = 0;
+    private available = 0;
 
     private idx = 0;
 
@@ -12,7 +12,7 @@ class BitReader32 implements BitReader {
     }
 
     public skip(len: number): void {
-        if (len <= 0) { throw new Error('out of range. 0<=len<=∞ '); }
+        if (len <= 0) throw new Error('out of range. 0<=len<=∞ ');
 
         let rest = len;
 
@@ -50,21 +50,23 @@ class BitReader32 implements BitReader {
                 if (this.available < len) {
                     this._fill(len);
                 }
-                const shift = (32 - len);
-                return (this.buffer >>> shift & (~0 >>> shift)) >>> 0;
+                const shift = 32 - len;
+                return ((this.buffer >>> shift) & (~0 >>> shift)) >>> 0;
             }
             case len > 0 && len <= 32 && len <= (this.available | 0b11000): {
                 if (this.available < len) {
                     this._fill((32 - len) & 0b11000);
                 }
-                const shift = (32 - len);
-                return (this.buffer >>> shift & (~0 >>> shift)) >>> 0;
+                const shift = 32 - len;
+                return ((this.buffer >>> shift) & (~0 >>> shift)) >>> 0;
             }
             case len > 0 && len <= 32:
-                throw new Error(`unaligned peek: only ${this.available} bits available of the requested ${len}`)
+                throw new Error(
+                    `unaligned peek: only ${this.available} bits available of the requested ${len}`,
+                );
         }
 
-        throw new Error(`${len} is out of range: (0<len<=32)`)
+        throw new Error(`${len} is out of range: (0<len<=32)`);
     }
 
     public take(len: number): number {
@@ -94,7 +96,7 @@ class BitReader32 implements BitReader {
 
     public byteAlign(): number {
         const bits = this.available % 8;
-        if (bits > 0) { this.skip(bits); }
+        if (bits > 0) this.skip(bits);
         return bits;
     }
 
@@ -106,15 +108,16 @@ class BitReader32 implements BitReader {
     }
 
     private _fill(len: number): void {
-        if (this.available + len > 32) { throw new Error('invalid fill: cannot fill more than 32 bits at a time'); }
+        if (this.available + len > 32)
+            throw new Error('invalid fill: cannot fill more than 32 bits at a time');
 
         while (this.available <= 24) {
             if (this.idx + 1 > this.source.length) {
-                if (this.available >= len) { break; }
+                if (this.available >= len) break;
                 throw new Error('unexpected end of stream');
             }
 
-            const shift = (32 - this.available - 8);
+            const shift = 32 - this.available - 8;
             const byte = this.source[this.idx++];
             this.buffer = this.buffer | (byte << shift);
             this.available += 8;
@@ -124,4 +127,4 @@ class BitReader32 implements BitReader {
     }
 }
 
-export default BitReader32
+export default BitReader32;
