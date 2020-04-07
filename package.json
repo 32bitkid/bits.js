@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "A simple bit-reader and bit-writer",
   "author": "J Holmes <j@holmes.codes>",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
@@ -11,12 +11,12 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "mocha test/",
-    "test:watch": "mocha --watch test/",
-    "lint": "eslint src/**/*.ts",
+    "clean": "rimraf dist",
     "coverage": "nyc mocha test/",
     "format": "prettier --write src/",
-    "clean": "rimraf dist"
+    "lint": "eslint src/**/*.ts",
+    "test": "mocha test/",
+    "test:watch": "mocha --watch test/"
   },
   "nyc": {
     "extension": [
@@ -56,7 +56,9 @@
   },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint"],
+    "plugins": [
+      "@typescript-eslint"
+    ],
     "extends": [
       "eslint:recommended",
       "plugin:@typescript-eslint/eslint-recommended",
